@@ -2,12 +2,13 @@
 
 import { cn } from '@/lib/utils';
 import { Product } from '@/types/types';
-import { ArrowBigRight, ArrowBigUp, EyeIcon, ShoppingCart, Star } from 'lucide-react';
+import { EyeIcon, ShoppingCart, Star } from 'lucide-react';
 import Link from 'next/link';
-import { FC, useState } from 'react'
+import { FC} from 'react'
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import { useCartStore } from '@/store/cart';
 
 interface ProductGridProps {
   title: string;
@@ -116,8 +117,22 @@ const mockProducts: Product[] = [
 const ProductGrid: FC<ProductGridProps> = ({
   title, products = mockProducts, viewAllLink,
 }) => {
-  const [inCart, setInCart] = useState(false);
+  // const [inCart, setInCart] = useState(false);
 
+  const {addItem,isInCart,items} = useCartStore();
+  console.log("ProductGrid ~ items:" , items)
+
+  const handleAddToCart = (product:Product) => {
+    addItem({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      quantity: 1,
+      sku: product.sku,
+      stock: product.stock,
+    });
+  };
   const renderStars = (rating:number) => {
     return Array.from({length: 5}, (_, i) => (
       <Star  
@@ -148,6 +163,7 @@ const ProductGrid: FC<ProductGridProps> = ({
       {/* Product Grid */}
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6'>
           {products.map((product) => {
+            const inCart = isInCart(product.id);
             const discount = product.comparePrice ? Math.round(
               ((product.comparePrice- product.price) / product.comparePrice) * 100
             ) : 0;
@@ -254,7 +270,7 @@ const ProductGrid: FC<ProductGridProps> = ({
                    {/* Add to Cart Button */}
                   <Button
                     size="sm"
-                    // onClick={() => handleAddToCart(product)}
+                    onClick={() => handleAddToCart(product)}
                     disabled={product.stock === 0 || inCart}
                     className={cn(
                       "w-full",
@@ -288,4 +304,4 @@ const ProductGrid: FC<ProductGridProps> = ({
   )
 }
 
-export default ProductGrid
+export default ProductGrid;
