@@ -1,15 +1,23 @@
 "use client";
-import Footer from '@/components/Layout/Footer';
-import Navbar from '@/components/Layout/Navbar';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import React, { useState } from 'react'
+import Footer from "@/components/Layout/Footer";
+import Navbar from "@/components/Layout/Navbar";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { signIn } from "next-auth/react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { toast } from "sonner";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -18,30 +26,49 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async(e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+      console.log("🚀 ~ handleSubmit ~ result:", result);
+      if (result?.error) {
+        toast.error("Invalid email or password");
+      } else {
+        toast.success("Welcome back!");
+        router.push("/");
+        router.refresh();
+      }
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
   };
-
   return (
     <div className="min-h-screen bg-background">
-      <Navbar/>
+      <Navbar />
+
       <main className="container mx-auto px-4 py-16">
         <div className="max-w-md mx-auto">
           <Card>
-            <CardHeader>
-              <CardTitle>
-                Welcome Back
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-2xl text-center">
+                Welcome back
               </CardTitle>
               <CardDescription className="text-center">
                 Sign in to your account to continue shopping
               </CardDescription>
             </CardHeader>
-            <CardContent className='space-y-4'>
-               {/* Google Sign In */}
+            <CardContent className="space-y-4">
+              {/* Google Sign In */}
               <Button
                 variant="outline"
                 onClick={handleGoogleSignIn}
@@ -79,11 +106,12 @@ const LoginPage = () => {
                   </span>
                 </div>
               </div>
+
               {/* Email/Password Form */}
-              <form onSubmit={handleSubmit} className='space-y-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='email'>Email</Label>
-                  <div className='relative'>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="email"
@@ -125,6 +153,7 @@ const LoginPage = () => {
                     </Button>
                   </div>
                 </div>
+
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Signing in..." : "Sign In"}
                 </Button>
@@ -147,12 +176,12 @@ const LoginPage = () => {
                   </Link>
                 </p>
               </div>
-
             </CardContent>
           </Card>
         </div>
       </main>
-      <Footer/>
+
+      <Footer />
     </div>
   );
 };

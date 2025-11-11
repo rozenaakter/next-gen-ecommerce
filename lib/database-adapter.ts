@@ -1,38 +1,77 @@
 import { COLLECTIONS } from "@/types/mongodb";
-import { getMongoDBService, MongoDBService } from "./mongodb";
 import { getDatabaseConfig } from "./env";
+import { getMongoDBService, MongoDBService } from "./mongodb";
 
 interface DatabaseAdapter {
-  // user-related methods
-  //   createUser(data: any): Promise<any>;
-  //   getUserById(id: string): Promise<any>;
-  //   getUserByEmail(email: string): Promise<any>;
-  //   updateUser(id: string, data: any): Promise<any>;
-  //   deleteUser(id: string): Promise<void>;
+  createUser(data: any): Promise<any>;
+  getUserById(id: string): Promise<any>;
+  getUserByEmail(email: string): Promise<any>;
+  updateUser(id: string, data: any): Promise<any>;
+  deleteUser(id: string): Promise<void>;
 
-  // order-related methods
   createOrder(data: any): Promise<any>;
   getOrderById(id: string): Promise<any>;
-  //   getOrdersByUserId(userId: string): Promise<any[]>;
-  //   updateOrder(id: string, data: any): Promise<any>;
-  //   deleteOrder(id: string): Promise<void>;
 }
+
 class MongoDBAdapter implements DatabaseAdapter {
-   private service: MongoDBService | null = null;
+  private service: MongoDBService | null = null;
+
   private async getService() {
     if (!this.service) {
       this.service = await getMongoDBService();
     }
     return this.service;
   }
-  private convetDoc(doc: any) {
+
+  private convertDoc(doc: any) {
+    if (!doc) return null; // 💥 prevents reading _id on undefined
     return {
       ...doc,
-      id: doc._id.toString(),
+      id: doc._id ? doc._id.toString() : undefined,
     };
   }
 
-  // create orders related methods
+  // ---------- User methods ----------
+  async createUser(data: any) {
+    const service = await this.getService();
+    const result = await service.create(COLLECTIONS.USERS, {
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    return this.convertDoc(result);
+  }
+
+  async getUserById(id: string) {
+    const service = await this.getService();
+    const user = await service.findById(COLLECTIONS.USERS, id);
+    return this.convertDoc(user);
+  }
+
+  async getUserByEmail(email: string) {
+    const service = await this.getService();
+    const users = await service.findMany(COLLECTIONS.USERS, { email });
+    if (!users || users.length === 0) {
+      return null; // 💥 ensure we return null if no match
+    }
+    return this.convertDoc(users[0]);
+  }
+
+  async updateUser(id: string, data: any) {
+    const service = await this.getService();
+    const result = await service.updateOne(COLLECTIONS.USERS, id, {
+      ...data,
+      updatedAt: new Date(),
+    });
+    return this.convertDoc(result);
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    const service = await this.getService();
+    await service.deleteOne(COLLECTIONS.USERS, id);
+  }
+
+  // ---------- Order methods ----------
   async createOrder(data: any): Promise<any> {
     const service = await this.getService();
     const created = await service.create(COLLECTIONS.ORDERS, {
@@ -40,14 +79,14 @@ class MongoDBAdapter implements DatabaseAdapter {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    return this.convetDoc(created);
+    return this.convertDoc(created);
   }
+
   async getOrderById(id: string): Promise<any> {
     const service = await this.getService();
     const order = await service.findById(COLLECTIONS.ORDERS, id);
-    return order ? this.convetDoc(order) : null;
+    return order ? this.convertDoc(order) : null;
   }
-
 }
 
 export function createDatabaseAdapter(): DatabaseAdapter {
@@ -57,4 +96,5 @@ export function createDatabaseAdapter(): DatabaseAdapter {
   }
   throw new Error(`Unsupported database provider: ${config.provider}`);
 }
+
 export const dbAdapter = createDatabaseAdapter();

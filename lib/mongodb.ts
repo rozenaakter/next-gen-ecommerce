@@ -1,31 +1,31 @@
-import {Collection, Db, MongoClient, ObjectId} from "mongodb";
+import { Collection, Db, MongoClient, ObjectId } from "mongodb";
 
-
-const MONGODB_URL = process.env.MONGODB_URL || "mongodb://localhost:27017";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017";
 const MONGODB_DB = process.env.MONGODB_DB || "nextgenecommerce";
 
-if(!MONGODB_URL) {
-  throw new Error (
-   "Please define the MONGODB_URI environment variable inside .env"
+if (!MONGODB_URI) {
+  throw new Error(
+    "Please define the MONGODB_URI environment variable inside .env"
   );
 }
 if (!MONGODB_DB) {
   throw new Error(
-     "Please define the MONGODB_URI environment variable inside .env"
+    "Please define the MONGODB_DB environment variable inside .env"
   );
 }
-let cachedClient: MongoClient | null = null;
-let cachedDb : Db | null = null;
 
-export async function connectToDatabase():
-Promise<{
-  client: MongoClient; db:Db
+let cachedClient: MongoClient | null = null;
+let cachedDb: Db | null = null;
+
+export async function connectToDatabase(): Promise<{
+  client: MongoClient;
+  db: Db;
 }> {
-  if(cachedClient && cachedDb) {
-    return {client: cachedClient, db:cachedDb}
+  if (cachedClient && cachedDb) {
+    return { client: cachedClient, db: cachedDb };
   }
   try {
-    const client = new MongoClient(MONGODB_URL, {
+    const client = new MongoClient(MONGODB_URI, {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 5000,
       maxPoolSize: 10,
@@ -47,6 +47,7 @@ export async function getCollection<T>(name: string): Promise<Collection<T>> {
   const { db } = await connectToDatabase();
   return db.collection<T>(name);
 }
+
 export function closeConnection(): void {
   if (cachedClient) {
     cachedClient.close();
@@ -61,9 +62,7 @@ export class MongoDBService {
   constructor(db: Db) {
     this.db = db;
   }
-
-  //CRUD
-
+  // CRUD
   async create<T>(collectionName: string, data: Partial<T>): Promise<T> {
     try {
       const collection = this.db.collection<T>(collectionName);
@@ -74,7 +73,6 @@ export class MongoDBService {
       throw error;
     }
   }
-
   async findById<T>(collectionName: string, id: string): Promise<T | null> {
     try {
       const collection = this.db.collection<T>(collectionName);
@@ -84,7 +82,6 @@ export class MongoDBService {
       throw error;
     }
   }
-
   async findMany<T>(
     collectionName: string,
     filter: any = {},
@@ -110,8 +107,38 @@ export class MongoDBService {
       return [];
     }
   }
-
-
+  async updateOne<T>(
+    collectionName: string,
+    id: string,
+    data: Partial<T>
+  ): Promise<T | null> {
+    try {
+      const collection = this.db.collection<T>(collectionName);
+      // 🔧 FIX: Use 'new ObjectId()' instead of 'ObjectId()'
+      const result = await collection.findOneAndUpdate(
+        { _id: new ObjectId(id) } as any,
+        { $set: data },
+        { returnDocument: "after" }
+      );
+      return result || null;
+    } catch (error) {
+      console.error(`Error updating document in ${collectionName}:`, error);
+      return null;
+    }
+  }
+  async deleteOne(collectionName: string, id: string): Promise<boolean> {
+    try {
+      const collection = this.db.collection(collectionName);
+      // 🔧 FIX: Use 'new ObjectId()' instead of 'ObjectId()'
+      const result = await collection.deleteOne({
+        _id: new ObjectId(id),
+      } as any);
+      return result.deletedCount > 0;
+    } catch (error) {
+      console.error(`Error deleting document in ${collectionName}:`, error);
+      return false;
+    }
+  }
 }
 
 export async function getMongoDBService(): Promise<MongoDBService> {

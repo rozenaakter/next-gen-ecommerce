@@ -92,6 +92,9 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name: "cart-storage",
+      migrate: (persistedState:any, version: number) => {
+        return {items: []};
+      },
     }
   )
 );

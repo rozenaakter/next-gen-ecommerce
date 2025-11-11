@@ -1,52 +1,100 @@
-"use client"
-
+"use client";
 import Footer from "@/components/Layout/Footer";
 import Navbar from "@/components/Layout/Navbar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-
+import React, { useState } from "react";
+import { toast } from "sonner";
 
 const RegisterPage = () => {
-  
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); 
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const handleSubmit = async (e:React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
+    try {
+      const response = await fetch("/api/auth/registration", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          confirmPassword,
+        }),
+      });
+      const data = await response.json();
+      console.log("🚀 ~ handleSubmit ~ data:", data);
+
+      if (!response.ok) {
+        toast.error(data.error || "Something went wrong");
+        setIsLoading(false);
+        return;
+      }
+      toast.success("Registration successful!");
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+      if (result?.error) {
+        toast.error("Please try signing in manually");
+        router.push("/login");
+      } else {
+        router.push("/");
+        router.refresh();
+      }
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
-  }
-
-
+  };
   return (
     <div className="min-h-screen bg-background">
-      <Navbar/>
+      <Navbar />
 
       <main className="container mx-auto px-4 py-16">
         <div className="max-w-md mx-auto">
           <Card>
             <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl text-center">Create an Account</CardTitle>
+              <CardTitle className="text-2xl text-center">
+                Create an account
+              </CardTitle>
               <CardDescription className="text-center">
                 Sign up to start shopping and get exclusive offers
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Google sign up */}
-
+              {/* Google Sign Up */}
               <Button
                 variant="outline"
                 onClick={handleGoogleSignIn}
@@ -73,6 +121,7 @@ const RegisterPage = () => {
                 </svg>
                 Continue with Google
               </Button>
+
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <Separator className="w-full" />
@@ -84,8 +133,7 @@ const RegisterPage = () => {
                 </div>
               </div>
 
-               {/* Registration Form */}
-
+              {/* Registration Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
@@ -173,7 +221,7 @@ const RegisterPage = () => {
               </form>
 
               <div className="text-center">
-                 <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   Already have an account?{" "}
                   <Link href="/login" className="text-primary hover:underline">
                     Sign in
@@ -181,7 +229,7 @@ const RegisterPage = () => {
                 </p>
               </div>
 
-              {/* terms */}
+              {/* Terms */}
               <p className="text-xs text-muted-foreground text-center">
                 By creating an account, you agree to our{" "}
                 <Link href="/terms" className="text-primary hover:underline">
@@ -192,15 +240,12 @@ const RegisterPage = () => {
                   Privacy Policy
                 </Link>
               </p>
-
             </CardContent>
           </Card>
-
         </div>
       </main>
 
-      <Footer/>
-
+      <Footer />
     </div>
   );
 };

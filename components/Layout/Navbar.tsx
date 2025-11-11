@@ -23,6 +23,8 @@ import {
   NavigationMenuTrigger,
 } from "../ui/navigation-menu";
 import { Sheet, SheetContent, SheetTrigger } from "../ui/sheet";
+import { signOut, useSession } from "next-auth/react";
+import { toast } from "sonner";
 
 interface Category {
   id: string;
@@ -65,11 +67,23 @@ const categories: Category[] = [
   },
 ];
 const Navbar = () => {
-  const [session, setSession] = useState(false);
+  const {data: session} = useSession();
+  // const session = useSession();
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { getTotalItems } = useCartStore();
   const cartItemsCount = getTotalItems();
+  const handleSignOut= async () =>{
+    try{
+      await signOut({
+        redirect:true,
+        callbackUrl: "/"
+      });
+      toast.success("Sign Out successFully!");
+    }catch(error){
+      toast.error("Failed to sign out");
+    }
+  };
   return (
     <header
       className={`sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 ${
@@ -144,7 +158,7 @@ const Navbar = () => {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                    //   onClick={() => signOut()}
+                      onClick={handleSignOut}
                     >
                       Sign Out
                     </DropdownMenuItem>
