@@ -1,21 +1,20 @@
-"use client"
+"use client";
 
-import { cn } from '@/lib/utils';
-import { Product } from '@/types/types';
-import { EyeIcon, ShoppingCart, Star } from 'lucide-react';
-import Link from 'next/link';
-import { FC} from 'react'
-import { Card, CardContent } from '../ui/card';
-import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
-import { useCartStore } from '@/store/cart';
+import { cn } from "@/lib/utils";
+import { useCartStore } from "@/store/cart";
+import { Product } from "@/types/types";
+import { Heart, ShoppingCart, Star } from "lucide-react";
+import Link from "next/link";
+import { FC } from "react";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { Card, CardContent } from "../ui/card";
 
 interface ProductGridProps {
   title: string;
   products?: Product[];
-  viewAllLink?: string; 
+  viewAllLink?: string;
 }
-
 const mockProducts: Product[] = [
   {
     id: "1",
@@ -112,17 +111,16 @@ const mockProducts: Product[] = [
     sku: "CM-001",
     category: "Kitchen",
   },
-]
+];
 
 const ProductGrid: FC<ProductGridProps> = ({
-  title, products = mockProducts, viewAllLink,
+  title,
+  products = mockProducts,
+  viewAllLink,
 }) => {
-  // const [inCart, setInCart] = useState(false);
-
-  const {addItem,isInCart,items} = useCartStore();
-  console.log("ProductGrid ~ items:" , items)
-
-  const handleAddToCart = (product:Product) => {
+  const { addItem, isInCart, items } = useCartStore();
+  console.log("🚀 ~ ProductGrid ~ items:", items);
+  const handleAddToCart = (product: Product) => {
     addItem({
       productId: product.id,
       name: product.name,
@@ -133,58 +131,69 @@ const ProductGrid: FC<ProductGridProps> = ({
       stock: product.stock,
     });
   };
-  const renderStars = (rating:number) => {
-    return Array.from({length: 5}, (_, i) => (
-      <Star  
-      key={i}
-      className= {cn(
-        "h-4 w-4", i < Math.floor(rating) ? "fill-yellow-400 text-yellow-400" : "fill-gray-200 text-gray-200"        
-      )}
+  const renderStars = (rating: number) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star
+        key={i}
+        className={cn(
+          "h-4 w-4",
+          i < Math.floor(rating)
+            ? "fill-yellow-400 text-yellow-400"
+            : "fill-gray-200 text-gray-200"
+        )}
       />
     ));
   };
-
   return (
-    <div className='space-y-6'>
+    <div className="space-y-6">
       {/* Header */}
-      <div className='flex items-center justify-between'>
-        <h1 className="text-2xl font-bold">
-          {title}</h1>
-
-          {viewAllLink && (
-            <Link href={viewAllLink}
-            className='text-primary hover:text-primary/80 font-medium text-sm'
-            >
-              View All →
-            </Link>
-          )}
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">{title}</h2>
+        {viewAllLink && (
+          <Link
+            href={viewAllLink}
+            className="text-primary hover:text-primary/80 font-medium text-sm"
+          >
+            View All →
+          </Link>
+        )}
       </div>
-
       {/* Product Grid */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6'>
-          {products.map((product) => {
-            const inCart = isInCart(product.id);
-            const discount = product.comparePrice ? Math.round(
-              ((product.comparePrice- product.price) / product.comparePrice) * 100
-            ) : 0;
-            return (
-              <Card key= {product.id}
-              className='group hover:shadow-lg transition-all duration-300 overflow-hidden'
-              >
-                <CardContent className='p-0'>
-                  {/* Product Image */}
-                  <div className='relative'>
-                    <Link href={`product/${product.id}`}>
-                      <div className='relative w-full h-48 bg-gray-100 overflow-hidden'>
-                        <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                          <span className="text-gray-400 text-xs">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {products.map((product) => {
+          const inCart = isInCart(product.id);
+          const discount = product.comparePrice
+            ? Math.round(
+                ((product.comparePrice - product.price) /
+                  product.comparePrice) *
+                  100
+              )
+            : 0;
+          return (
+            <Card
+              key={product.id}
+              className="group hover:shadow-lg transition-all duration-300 overflow-hidden"
+            >
+              <CardContent className="p-0">
+                {/* Product Image */}
+                <div className="relative">
+                  <Link href={`/product/${product.id}`}>
+                    <div className="relative w-full h-48 bg-gray-100 overflow-hidden">
+                      <div className="absolute inset-0 bg-linear-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                        {/* <Image
+                          src={product.image}
+                          alt="placeholder"
+                          width={300}
+                          height={300}
+                        /> */}
+                        <span className="text-gray-400 text-xs">
                           Product Image
                         </span>
-                        </div>
+                      </div>
 
-                        {/* Badges */}
-                        <div className="absolute top-2 left-2 flex flex-col gap-1">
-                          {product.badge && (
+                      {/* Badges */}
+                      <div className="absolute top-2 left-2 flex flex-col gap-1">
+                        {product.badge && (
                           <Badge
                             variant={
                               product.badge === "NEW"
@@ -204,27 +213,25 @@ const ProductGrid: FC<ProductGridProps> = ({
                             -{discount}%
                           </Badge>
                         )}
-                        </div>
-                        {/* quick Link */}
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <Button
+                      </div>
+
+                      {/* Quick Actions */}
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <Button
                           variant="outline"
                           size="icon"
-                          className="h-8 w-8 bg-white/90 hover:bg-white cursor-pointer"
+                          className="h-8 w-8 bg-white/90 hover:bg-white"
                         >
-                          <EyeIcon className="h-4 w-4 cursor-pointer" />
+                          <Heart className="h-4 w-4" />
                         </Button>
-
-                        </div>
                       </div>
-                    </Link>
-
-                  </div>
-                  {/* product info */}
-
-                  <div className="p-4 space-y-3">
-                    {/* category */}
-                     <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                    </div>
+                  </Link>
+                </div>
+                {/* Product Info */}
+                <div className="p-4 space-y-3">
+                  {/* Category */}
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide">
                     {product.category}
                   </div>
                   {/* Product Name */}
@@ -242,7 +249,7 @@ const ProductGrid: FC<ProductGridProps> = ({
                       ({product.reviews})
                     </span>
                   </div>
-                   {/* Price */}
+                  {/* Price */}
                   <div className="flex items-center space-x-2">
                     <span className="text-lg font-bold text-primary">
                       ${product.price}
@@ -253,8 +260,7 @@ const ProductGrid: FC<ProductGridProps> = ({
                       </span>
                     )}
                   </div>
-
-                   {/* Stock Status */}
+                  {/* Stock Status */}
                   <div className="text-xs">
                     {product.stock > 0 ? (
                       <span className="text-green-600">
@@ -266,8 +272,7 @@ const ProductGrid: FC<ProductGridProps> = ({
                       </span>
                     )}
                   </div>
-
-                   {/* Add to Cart Button */}
+                  {/* Add to Cart Button */}
                   <Button
                     size="sm"
                     onClick={() => handleAddToCart(product)}
@@ -291,17 +296,14 @@ const ProductGrid: FC<ProductGridProps> = ({
                       </>
                     )}
                   </Button>
-
-                  </div>
-
-                </CardContent>
-
-              </Card>
-            )
-          })}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default ProductGrid;

@@ -32,10 +32,6 @@ const Home = () => {
         viewAllLink='/products/popular'
         />
 
-        
-
-
-
       </main>
      
       {/* footer here */}
